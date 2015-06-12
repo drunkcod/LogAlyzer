@@ -32,7 +32,7 @@ type IisLogReader(input:ILineReader, filter:IDataRecord->bool) =
     let getString = string << get
 
     new(path, filter) = 
-        let file = new StreamReader(new BufferedStream(File.OpenRead(path)))        
+        let file = new StreamReader(new BufferedStream(File.OpenRead(path)))
         new IisLogReader({ new ILineReader with
                 member this.EndOfStream = file.EndOfStream
                 member this.Close() = file.Close()

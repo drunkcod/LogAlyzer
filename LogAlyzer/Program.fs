@@ -14,6 +14,7 @@ module Program =
         try 
             let [|logPath; siteName|] = args
             let time = Stopwatch.StartNew()
+
             let bulkWriteToServer (reader:IDataReader) =
                 use db = new SqlConnection("Server=.;Database=IisLogs;Integrated Security=SSPI")
                 use bulkCopy = new SqlBulkCopy(db)
@@ -41,20 +42,18 @@ module Program =
                 reader.ReadHeaders() |> ignore
                 withReader reader
 
-            let bulkTransfer() =
-                let theWork = (fun (x:string) -> async {
-                    Console.WriteLine("Processing {0}", x)
-                    processFile bulkWriteToServer x
-                    Console.WriteLine("Done processing {0}", x)
-                })
+            let theWork = (fun (x:string) -> async {
+                Console.WriteLine("Processing {0}", x)
+                processFile bulkWriteToServer x
+                Console.WriteLine("Done processing {0}", x)
+            })
 
-                Directory.GetFiles(logPath, "*.log", SearchOption.AllDirectories)
-                |> Seq.map theWork
-                |> Async.Parallel 
-                |> Async.RunSynchronously 
-                |> ignore
+            Directory.GetFiles(logPath, "*.log", SearchOption.AllDirectories)
+            |> Seq.map theWork
+            |> Async.Parallel
+            |> Async.RunSynchronously
+            |> ignore
 
-            bulkTransfer()
             Console.WriteLine("Transfer done in: {0}", time.Elapsed)
         with
         | :? MatchFailureException -> Console.WriteLine("usage is:LogAlyzer <logPath> <siteName>")
